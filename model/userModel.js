@@ -43,17 +43,17 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
-    emailVerified: {
+    isVerified: {
       type: Boolean,
       default: false,
     },
     lastLogin: {
       type: Date,
-      default: Date.now,
+      default: null,
     },
     isActive: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     profileImage: {
       type: String,
@@ -67,7 +67,7 @@ userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 12);
   this.userCreatedAt = Date.now() - 1000;
-  // this.passwordConfirm = undefined;
+  this.passwordConfirm = undefined;
   next();
 });
 
