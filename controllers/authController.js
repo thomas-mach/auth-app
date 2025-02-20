@@ -1,20 +1,21 @@
+const crypto = require("crypto");
 const User = require("../model/userModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../utils/email");
+const { promisify } = require("util");
+const ms = require("ms");
 
-const signToken = (id) =>
+const signToken = (id, duration) =>
   jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
+    expiresIn: duration,
   });
 
-const createSendToken = (user, status, res) => {
-  const token = signToken(user._id);
+const createSendToken = (user, status, res, duration) => {
+  const token = signToken(user._id, duration);
   const cookieOtions = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-    ),
+    expires: new Date(Date.now() + ms(duration)),
     secure: true,
     httpOnly: true,
     // sameSite: "strict",
@@ -37,38 +38,34 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   if (existingUser) {
     if (!existingUser.isActive) {
-      // Riattiva l'account
       existingUser.isActive = true;
-      existingUser.isVerified = false; // Potresti richiedere una nuova verifica
+      existingUser.isVerified = false;
       existingUser.password = password;
       existingUser.passwordConfirm = passwordConfirm;
+      existingUser.name = name;
       await existingUser.save({ validateBeforeSave: false });
 
       // Invia la conferma email per riattivazione
-      const verificationToken = jwt.sign(
-        { id: existingUser._id },
-        process.env.JWT_SECRET,
-        { expiresIn: "24h" }
-      );
+      const verificationToken = signToken(existingUser._id, "1h");
       const verificationUrl = `${req.protocol}://${req.get(
         "host"
-      )}/users/auth?token=${verificationToken}`;
+      )}/v1/auth/verify?token=${verificationToken}`;
 
       await sendEmail({
         email: existingUser.email,
-        subject: "Conferma la riattivazione del tuo account",
-        message: `Clicca qui per riattivare il tuo account: ${verificationUrl}`,
+        subject: "Confirm the reactivation of your account.",
+        message: `Click here to reactivate your account. ${verificationUrl}`,
       });
 
       return res.status(200).json({
         status: "success",
         message:
-          "Il tuo account è stato riattivato! Controlla l'email per confermare.",
+          "Your account has been reactivated! Check your email to confirm.",
       });
     }
 
     // Se l'utente esiste ed è attivo, blocca la registrazione
-    return next(new AppError("Email già in uso!", 400));
+    return next(new AppError("Email already in use!", 400));
   }
 
   // Crea utente con stato "non verificato"
@@ -80,19 +77,13 @@ exports.signup = catchAsync(async (req, res, next) => {
     isVerified: false,
   });
 
-  // Genera un token di verifica (es. 24h di validita)
-  const verificationToken = jwt.sign(
-    { id: newUser._id },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "24h",
-    }
-  );
+  // Genera un token di verifica (es. 1h di validita)
+  const verificationToken = signToken(newUser._id, "1h");
 
   // Crea il link di verifica
   const verificationUrl = `${req.protocol}://${req.get(
     "host"
-  )}/users/auth?token=${verificationToken}`;
+  )}/v1/auth/verify?token=${verificationToken}`;
 
   // Invia l'email di conferma
   try {
@@ -144,6 +135,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   // Aggiotna lo stato di verifica
   user.isVerified = true;
   user.isActive = true;
+  user.deactivatedAt = null;
   await user.save({ validateBeforeSave: false });
 
   res.status(200).json({
@@ -191,6 +183,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   if (req.cookies.jwt) {
     token = req.cookies.jwt;
+    console.log("TOKEN FROM REQ.COOKI.JWT", token);
   } else if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -202,8 +195,8 @@ exports.protect = catchAsync(async (req, res, next) => {
     return next(new AppError("Devi essere loggato per accedere!", 401));
   }
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+  console.log("DECODED", decoded);
   const user = await User.findById(decoded.id);
   if (!user || !user.isActive) {
     return next(
@@ -211,29 +204,107 @@ exports.protect = catchAsync(async (req, res, next) => {
     );
   }
 
+  // Chcek if user changed the password after the token was issued.
+  if (user.changedPasswordAfter(decoded.iat)) {
+    return next(
+      new AppError("The password was recently changed please log in again", 401)
+    );
+  }
+
   req.user = user;
   next();
 });
 
-exports.softDeleteUser = catchAsync(async (req, res, next) => {
-  const user = await User.findByIdAndUpdate(
-    req.user.id, //viene preso dal middleware di autenticazione
-    { isActive: false },
-    { new: true }
-  );
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  // 1) Get user based on posted email
+  const user = await User.findOne({ email: req.body.email });
 
   if (!user) {
-    next(new AppError("Utente non trovato", 404));
+    return next(new AppError("There is no user with this email adress", 404));
   }
 
-  // Disconnetti l'utente cancellando il cookie JWT
-  res.cookie("jwt", "loggedout", {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
+  // 2) Generate the random reset token
+  const resetToken = user.createResetPasswordToken();
+  await user.save({ validateBeforeSave: false });
+
+  // 3) Send it to user email
+  const resetURL = `${req.protocol}://${req.get(
+    "host"
+  )}/v1/auth/resetPassword/${resetToken}`;
+
+  const message = `Forgot your password? Submit a PATCH request with your new password and passwordConfirm to ${resetURL}`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: `Your password reset token (valid 10 mins)`,
+      message,
+    });
+
+    res.status(200).json({
+      status: "success",
+      message: "Token send to email",
+    });
+  } catch (err) {
+    (user.passwordResetToken = undefined),
+      (user.passwordResetExpires = undefined);
+    await user.save({ validateBeforeSave: false });
+    return next(
+      new AppError("There was an error sending emial try again later!"),
+      500
+    );
+  }
+});
+
+exports.resetPassword = catchAsync(async (req, res, next) => {
+  // 1) Get user based on the token
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
   });
 
-  res.status(200).json({
-    status: "success",
-    message: "Il tuo account è stato disattivato con successo!",
-  });
+  if (!user) {
+    return next(new AppError("Token is expired or invalid", 404));
+  }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  user.passwordChangedAt = Date.now();
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+
+  await user.save();
+
+  createSendToken(user, 200, res);
+});
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+  // 1) Get user from colection
+  const user = await User.findById(req.user.id).select("+password");
+
+  if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
+    return next(new AppError("Your curren password is wrong", 401));
+  }
+
+  // if (user.correctPassword(req.body.passwordConfirm, user.password)) {
+  //   return next(
+  //     new AppError("Your new password must be defrent then old password")
+  //   );
+  // }
+
+  user.password = req.body.password;
+  user.passwordConfirm = req.body.passwordConfirm;
+  await user.save();
+
+  createSendToken(user, 200, res);
+  // const token = signToken(user._id);
+
+  // res.status(200).json({
+  //   status: "success",
+  //   token,
+  // });
 });
