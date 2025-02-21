@@ -89,13 +89,14 @@ exports.signup = catchAsync(async (req, res, next) => {
   try {
     await sendEmail({
       email: newUser.email,
-      subject: "Verifica your email",
+      subject: "Check your email to confirm.",
       message: verificationUrl,
     });
 
     res.status(200).json({
       status: "success",
-      message: "Token send to email",
+      message:
+        "Signup successful. Please check your email to verify your account.",
     });
   } catch (err) {
     await User.findByIdAndDelete(newUser._id);
@@ -110,7 +111,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   const { token } = req.query;
 
   if (!token) {
-    return next(new AppError("Token mancante", 400));
+    return next(new AppError("Missing token", 400));
   }
 
   // Verifica token
@@ -119,17 +120,17 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
-    return next(new AppError("Token non valido o scaduto", 400));
+    return next(new AppError("Invalid or expired token", 400));
   }
   // Trova l'utente
   const user = await User.findById(decoded.id);
 
   if (!user) {
-    return next(new AppError("Utente non trovato", 400));
+    return next(new AppError("User not found", 400));
   }
 
   if (user.isVerified) {
-    return next(new AppError("Email già verificata!", 400));
+    return next(new AppError("Email already verified!", 400));
   }
 
   // Aggiotna lo stato di verifica
@@ -140,15 +141,17 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "Email verificata con successo! Ora puoi effettuare il login.",
-    data: user,
+    message: "Email successfully verified! You can now log in.",
+    data: {
+      email: user.email,
+      name: user.name,
+    },
   });
   // .redirect(`${process.env.FRONTEND_URL}/login`);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
-  console.log(req.body);
 
   if (!email || !password) {
     return next(new AppError("Please provaid email and password"), 400);
@@ -163,9 +166,8 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   user.lastLogin = Date.now();
-
   await user.save({ validateBeforeSave: false });
-  createSendToken(user, 201, res);
+  createSendToken(user, 201, res, "7d");
 });
 
 exports.logout = (req, res) => {
@@ -175,7 +177,7 @@ exports.logout = (req, res) => {
       expires: new Date(Date.now() + 10 * 1000),
       httpOnly: true,
     })
-    .json({ status: "success", message: "Logout eseguito con successo!" });
+    .json({ status: "success", message: "You are logged out" });
 };
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -183,7 +185,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 
   if (req.cookies.jwt) {
     token = req.cookies.jwt;
-    console.log("TOKEN FROM REQ.COOKI.JWT", token);
   } else if (
     req.headers.authorization &&
     req.headers.authorization.startsWith("Bearer")
@@ -192,15 +193,15 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   if (!token) {
-    return next(new AppError("Devi essere loggato per accedere!", 401));
+    return next(new AppError("You must be logged in to access!", 401));
   }
 
   const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-  console.log("DECODED", decoded);
+
   const user = await User.findById(decoded.id);
   if (!user || !user.isActive) {
     return next(
-      new AppError("L'utente non esiste o è stato disattivato!", 401)
+      new AppError("The user does not exist or has been deactivated!", 401)
     );
   }
 
@@ -243,7 +244,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: "success",
-      message: "Token send to email",
+      message: "Please check your email to reset your password.",
     });
   } catch (err) {
     (user.passwordResetToken = undefined),
@@ -279,7 +280,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   await user.save();
 
-  createSendToken(user, 200, res);
+  createSendToken(user, 200, res, "7d");
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
@@ -290,21 +291,15 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
     return next(new AppError("Your curren password is wrong", 401));
   }
 
-  // if (user.correctPassword(req.body.passwordConfirm, user.password)) {
-  //   return next(
-  //     new AppError("Your new password must be defrent then old password")
-  //   );
-  // }
+  if (await user.correctPassword(req.body.password, user.password)) {
+    return next(
+      new AppError("Your new password must be different from the old one", 400)
+    );
+  }
 
   user.password = req.body.password;
   user.passwordConfirm = req.body.passwordConfirm;
   await user.save();
 
-  createSendToken(user, 200, res);
-  // const token = signToken(user._id);
-
-  // res.status(200).json({
-  //   status: "success",
-  //   token,
-  // });
+  createSendToken(user, 200, res, "7d");
 });
