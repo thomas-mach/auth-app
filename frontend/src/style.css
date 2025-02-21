@@ -1,79 +1,64 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  user-select: none;
+  /* outline: 1px solid lime; */
+}
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --ff-primary: "Space Grotesk", sans-serif;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  --fw-reg: 300;
+  --fw-bold: 700;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  --clr-dark: #151515;
+  --clr-dark-light: #5f5f5f;
+  --clr-light: #ffffff;
+  --clr-light-dark: #d9d9d9;
+  --clr-accent: #9d2c76;
+  --clr-error: #ef4444;
+
+  --fs-h1: 2.5rem;
+  --fs-h2: 2rem;
+  --fs-h3: 1.5rem;
+  --fs-body: 1rem;
+  --fs-medium: 1.3rem;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+@media (min-width: 600px) {
+  :root {
+    --fs-h1: 3.5rem;
+    --fs-h2: 3rem;
+    --fs-h3: 1.5rem;
+    --fs-body: 1.125rem;
+    --fs-medium: 1.5rem;
+  }
 }
-a:hover {
-  color: #535bf2;
+
+@media (min-width: 1024px) {
+  :root {
+    --fs-h1: 4.5rem;
+    --fs-h2: 3rem;
+    --fs-h3: 2rem;
+    --fs-body: 1.125rem;
+    --fs-medium: 1.7rem;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  line-height: 1.1;
+  margin: 0;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-.card {
-  padding: 2em;
-}
-
-#app {
-  max-width: 1280px;
+  background-color: #c6c6c6;
+  font-family: var(--ff-primary);
+  font-size: var(--fs-body);
+  line-height: 1.6;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
 }
