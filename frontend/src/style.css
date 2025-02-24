@@ -14,14 +14,15 @@
 
   --clr-dark: #151515;
   --clr-dark-light: #5f5f5f;
-  --clr-light: #ffffff;
+  --clr-light: #f2f3f4;
   --clr-light-dark: #d9d9d9;
   --clr-accent: #9d2c76;
   --clr-error: #ef4444;
 
   --fs-h1: 2.5rem;
-  --fs-h2: 2rem;
+  --fs-h2: 1.75rem;
   --fs-h3: 1.5rem;
+  --fs-small: 0.75rem;
   --fs-body: 1rem;
   --fs-medium: 1.3rem;
 }
@@ -29,8 +30,9 @@
 @media (min-width: 600px) {
   :root {
     --fs-h1: 3.5rem;
-    --fs-h2: 3rem;
+    --fs-h2: 2rem;
     --fs-h3: 1.5rem;
+    --fs-small: 0.75rem;
     --fs-body: 1.125rem;
     --fs-medium: 1.5rem;
   }
@@ -41,6 +43,7 @@
     --fs-h1: 4.5rem;
     --fs-h2: 3rem;
     --fs-h3: 2rem;
+    --fs-small: 0.75rem;
     --fs-body: 1.125rem;
     --fs-medium: 1.7rem;
   }

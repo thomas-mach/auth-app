@@ -20,12 +20,13 @@
 <style scoped>
 .card {
   background-color: var(--clr-light);
+  width: 100%;
   max-width: 600px;
   border-radius: 20px;
   padding: 2em;
   display: flex;
   flex-direction: column;
-  gap: 1em;
+  /* gap: 1em; */
 }
 
 .card-title {
@@ -37,5 +38,11 @@
 .card-message {
   font-size: var(--fs-body);
   color: var(--clr-dark-light);
+}
+
+@media (min-width: 600px) {
+  .card {
+    min-width: 480px;
+  }
 }
 </style>

@@ -13,22 +13,22 @@
 <style scoped>
 .app-wrapper {
   width: 100%;
-  border: 1px solid red;
+  /* border: 1px solid red; */
 }
 
 .header {
   height: 10vh;
-  border: 1px solid rgb(20, 231, 168);
+  /* border: 1px solid rgb(20, 231, 168);*/
 }
 
 .main {
   width: 100%;
   height: 80vh;
-  border: 1px solid rgb(11, 32, 221);
+  /* border: 1px solid rgb(11, 32, 221); */
 }
 
 .footer {
   height: 10vh;
-  border: 1px solid rgb(185, 255, 7);
+  /* border: 1px solid rgb(185, 255, 7); */
 }
 </style>
