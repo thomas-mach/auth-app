@@ -79,7 +79,9 @@ import CardForm from "../components/CardForm.vue";
 import { ref } from "vue";
 import { signin } from "../api/authService.js";
 import { useRouter } from "vue-router";
+import { useAuthStore } from "../store/storeAuth.js";
 
+const authStore = useAuthStore();
 const icon = ref(["fas", "lock"]);
 const password = ref("");
 const email = ref("");
@@ -99,16 +101,18 @@ const hendelSingin = async () => {
   emailValidate();
   passwordValidate();
   try {
-    const data = await signin({
+    const response = await signin({
       email: email.value,
       password: password.value,
     });
-    console.log("Login success:", data);
-    console.log("Response", data.message);
-    successMessage.value = data.message;
+    console.log("Login success:", response);
+    console.log("Response", response.message);
+    successMessage.value = response.message;
     email.value = "";
     password.value = "";
-    router.push("/");
+    router.push("/dash-board");
+    authStore.login({ isLoggedIn: true, name: response.data.user.name });
+    console.log("from store", authStore.user);
   } catch (error) {
     console.log(error);
     errorMessage.value = error.response.data.message;

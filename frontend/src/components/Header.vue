@@ -61,14 +61,37 @@
           <font-awesome-icon :icon="['fas', 'xmark']" />
         </button>
         <ul class="nav-user__list">
-          <li class="nav-user__item" @click="showUserNav = false">
+          <li
+            v-if="!authStore.user?.isLoggedIn"
+            class="nav-user__item"
+            @click="showUserNav = false"
+          >
             <router-link to="/signin" class="custom-link-signin"
               >Sign In</router-link
             >
           </li>
-          <li class="nav-user__item" @click="showUserNav = false">
+          <li
+            v-if="!authStore.user?.isLoggedIn"
+            class="nav-user__item"
+            @click="showUserNav = false"
+          >
             <router-link to="/signup" class="custom-link-signup"
               >Sign Up</router-link
+            >
+          </li>
+          <li
+            v-if="isDesktop && authStore.user?.isLoggedIn"
+            class="nav-user__item"
+            @click="showUserNav = false"
+          >
+            <p>Welcome {{ authStore.user?.name }}</p>
+          </li>
+          <li v-if="authStore.user?.isLoggedIn" class="nav-user__item">
+            <router-link
+              to="/logout"
+              class="custom-link-signup"
+              @click="(showUserNav = false), hendeleLogout()"
+              >Logout</router-link
             >
           </li>
           <li
@@ -80,9 +103,6 @@
               >DashBoard</router-link
             >
           </li>
-          <!-- <li class="nav-user__item" @click="showUserNav = false">
-            <router-link to="/logout" class="custom-link">Logout</router-link>
-          </li> -->
         </ul>
       </nav>
     </transition>
@@ -92,9 +112,26 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { RouterLink } from "vue-router";
+import { logout } from "../api/authService.js";
+import { useAuthStore } from "../store/storeAuth.js";
+import { useRouter } from "vue-router";
+
+const authStore = useAuthStore();
+const router = useRouter();
 let showNav = ref(false);
 let showUserNav = ref(false);
 let isDesktop = ref(window.innerWidth > 768);
+
+const hendeleLogout = async () => {
+  try {
+    const data = await logout();
+    authStore.login({ isLoggedIn: false });
+    router.push("/");
+    console.log(data);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 const updateScreenSize = () => {
   isDesktop.value = window.innerWidth > 768;

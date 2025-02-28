@@ -12,7 +12,7 @@
       <footer class="footer">
         <img
           class="hills"
-          src="../public/images/pattern-hills.svg"
+          src="../images/pattern-hills.svg"
           alt="pattern-hills"
         />
       </footer>
@@ -35,7 +35,7 @@ import Header from "./components/Header.vue";
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-image: url(../public/images/bg-stars.svg);
+  background-image: url(images/bg-stars.svg);
   height: 100%;
 }
 
