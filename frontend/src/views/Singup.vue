@@ -6,32 +6,58 @@
       </template>
       <template #message>
         <div class="message-placeholder">
-          <p class="message" v-show="isError">Lorem ipsum dolor sit, amet</p>
+          <p class="success-generic-message" v-if="successMessage">
+            {{ successMessage }}
+          </p>
+          <p class="error-generic-message" v-if="errorMessage">
+            {{ errorMessage }}
+          </p>
         </div>
       </template>
       <template #form>
-        <form novalidate @submit.prevent="submitForm">
+        <form novalidate @submit.prevent="handleSignup">
           <!-- INPUT NAME -->
           <label for="name">Name</label>
           <div class="input-wraper">
-            <input type="text" id="name" placeholder="Name" />
+            <input
+              type="text"
+              :class="{
+                'error-input': getError('name'),
+                'valid-input': !nameValidate(),
+              }"
+              v-model="name"
+              id="name"
+              placeholder="Name"
+            />
             <font-awesome-icon class="icon" :icon="['fas', 'user']" />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p class="error-message" v-if="getError('name') && nameValidate()">
+              {{ getError("name") }}
             </p>
           </div>
 
-          <!-- INPUT EMIAL -->
+          <!-- INPUT EMAIL -->
           <label for="email">Email</label>
           <div class="input-wraper">
-            <input type="text" id="email" placeholder="Email Adress" />
+            <input
+              type="text"
+              :class="{
+                'error-input': getError('email'),
+                'valid-input': emailValidate(),
+              }"
+              v-model="email"
+              id="email"
+              placeholder="Email Adress"
+            />
             <font-awesome-icon class="icon" :icon="['fas', 'envelope']" />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p
+              class="error-message"
+              v-if="getError('email') && !emailValidate()"
+            >
+              {{ getError("email") }}
             </p>
           </div>
 
@@ -45,15 +71,22 @@
             />
             <input
               :type="type"
+              :class="{
+                'error-input': getError('password'),
+                'valid-input': passwordValidate(),
+              }"
               id="password"
               placeholder="Enter Password"
               v-model="password"
-              @input="toggleIcon"
+              @input="toggleIcon()"
             />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p
+              class="error-message"
+              v-if="getError('password') && !passwordValidate()"
+            >
+              {{ getError("password") }}
             </p>
           </div>
 
@@ -67,24 +100,31 @@
             />
             <input
               :type="type"
+              :class="{
+                'error-input': getError('passwordConfirm'),
+                'valid-input': passwordConfirmValidate(),
+              }"
               id="password-confirm"
               placeholder="Confirm Password"
-              v-model="password"
-              @input="toggleIcon"
+              v-model="passwordConfirm"
+              @input="toggleIcon()"
             />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p
+              class="error-message"
+              v-if="getError('passwordConfirm') && !passwordConfirmValidate()"
+            >
+              {{ getError("passwordConfirm") }}
             </p>
           </div>
-          <button class="btn" @click="test">SIGN IN</button>
+          <button class="btn" type="submit">SIGN UP</button>
         </form>
       </template>
       <template #footer>
         <div class="create-acount-link-wraper">
           <p>Already Have an Account?</p>
-          <router-link to="/login" class="create-account-link"
+          <router-link to="/signin" class="create-account-link"
             >Login to Account</router-link
           >
         </div>
@@ -96,24 +136,60 @@
 <script setup>
 import CardForm from "../components/CardForm.vue";
 import { ref } from "vue";
+import { signup } from "../api/authService.js";
 
 const icon = ref(["fas", "lock"]);
+const name = ref("");
+const email = ref("");
 const password = ref("");
+const passwordConfirm = ref("");
 const type = ref("password");
-let isError = ref(false);
+let successMessage = ref("");
+let errorMessage = ref("");
+let errorsBackend = ref([]);
+
+const handleSignup = async () => {
+  errorsBackend.value = [];
+  successMessage.value = "";
+  errorMessage.value = "";
+  try {
+    const data = await signup({
+      name: name.value,
+      email: email.value,
+      password: password.value,
+      passwordConfirm: passwordConfirm.value,
+    });
+    console.log("Signup success:", data);
+    console.log("Response", data.message);
+    successMessage.value = data.message;
+    name.value = "";
+    email.value = "";
+    password.value = "";
+    passwordConfirm.value = "";
+  } catch (error) {
+    console.log(error);
+    errorMessage.value = error.response.data.message;
+    if (error.response?.data?.errors) {
+      errorsBackend.value = error.response.data.errors;
+      console.log(errorsBackend.value);
+    } else {
+      errorsBackend.value = [{ field: "general", message: "Error" }];
+    }
+  }
+};
 
 const toggleIcon = () => {
-  if (password.value.length === 0) {
-    icon.value = ["fas", "lock"];
-    type.value = "password";
-  } else {
+  if (password.value || passwordConfirm.value) {
     icon.value =
       type.value === "password" ? ["fas", "eye-slash"] : ["fas", "eye"];
+  } else {
+    icon.value = ["fas", "lock"];
+    type.value = "password";
   }
 };
 
 const showPassword = () => {
-  if (password.value.length > 0) {
+  if (password.value.length > 0 || passwordConfirm.value.length > 0) {
     if (type.value === "password") {
       type.value = "text";
       icon.value = ["fas", "eye"];
@@ -124,8 +200,24 @@ const showPassword = () => {
   }
 };
 
-const test = () => {
-  isError.value = !isError.value;
+const getError = (field) => {
+  const errorObj = errorsBackend.value.find((error) => error.field === field);
+  return errorObj ? errorObj.message : null;
+};
+
+const nameValidate = () => (name.value?.length || 0) < 2;
+
+const emailValidate = () => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email.value);
+};
+
+const passwordValidate = () => password.value.length >= 8;
+const passwordConfirmValidate = () => {
+  return (
+    passwordConfirm.value.length >= 8 &&
+    passwordConfirm.value === password.value
+  );
 };
 </script>
 
@@ -244,17 +336,36 @@ input:focus {
 
 .error-message-placeholder {
   height: var(--fs-small);
-  margin: 0.4em 0 0.3em;
-}
-
-.message {
-  font-size: var(--fs-body);
-  /* font-weight: var(--fw-bold); */
+  margin: 0.5em 0 0.5em;
 }
 
 .message-placeholder {
-  height: var(--fs-body);
+  min-height: var(--fs-body);
   margin: 0.5em 0 0.5em;
   color: var(--clr-error);
+}
+
+.success-generic-message {
+  font-size: var(--fs-body);
+  color: var(--clr-valid);
+  font-weight: var(--fw-bold);
+}
+
+.error-generic-message {
+  font-size: var(--fs-body);
+  color: var(--clr-error);
+  font-weight: var(--fw-bold);
+}
+
+.error-input {
+  border: 2px solid var(--clr-error);
+}
+
+.valid-input {
+  border: 2px solid var(--clr-valid);
+}
+
+.valid-input:focus {
+  border: 2px solid var(--clr-valid);
 }
 </style>

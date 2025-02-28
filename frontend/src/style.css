@@ -18,6 +18,7 @@
   --clr-light-dark: #d9d9d9;
   --clr-accent: #9d2c76;
   --clr-error: #ef4444;
+  --clr-valid: #19c419;
 
   --fs-h1: 2.5rem;
   --fs-h2: 1.75rem;
@@ -64,4 +65,8 @@ body {
   font-size: var(--fs-body);
   line-height: 1.6;
   margin: 0 auto;
+}
+
+img {
+  display: block;
 }

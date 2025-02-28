@@ -1,34 +1,77 @@
 <template>
   <div id="app" class="app-wrapper">
-    <header class="header">header component qui</header>
+    <div class="stars">
+      <header class="header">
+        <Header />
+      </header>
 
-    <main class="main">
-      <router-view />
-    </main>
+      <main class="main">
+        <router-view />
+      </main>
 
-    <footer class="footer">footer component qui</footer>
+      <footer class="footer">
+        <img
+          class="hills"
+          src="../public/images/pattern-hills.svg"
+          alt="pattern-hills"
+        />
+      </footer>
+    </div>
   </div>
 </template>
+
+<script setup>
+import Header from "./components/Header.vue";
+</script>
 
 <style scoped>
 .app-wrapper {
   width: 100%;
-  /* border: 1px solid red; */
+  background: linear-gradient(#1d1e28, #261a2d);
+  /* border: 1px solid rgb(144, 234, 0); */
+}
+
+.stars {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-image: url(../public/images/bg-stars.svg);
+  height: 100%;
 }
 
 .header {
-  height: 10vh;
-  /* border: 1px solid rgb(20, 231, 168);*/
+  margin: 0 auto;
+  width: 100%;
+  /* border: 1px solid rgb(190, 22, 22); */
 }
 
 .main {
   width: 100%;
-  height: 80vh;
+  flex-grow: 1;
+  z-index: 200;
   /* border: 1px solid rgb(11, 32, 221); */
 }
 
 .footer {
-  height: 10vh;
-  /* border: 1px solid rgb(185, 255, 7); */
+  width: 100%;
+  position: fixed;
+  bottom: 0;
+}
+
+.hills {
+  transform: translateX(-20%);
+}
+
+@media (min-width: 1430px) {
+  .hills {
+    transform: translateX(0%);
+    width: 100%;
+  }
+}
+
+@media (min-width: 1140px) {
+  .hills {
+    transform: translateX(0%);
+  }
 }
 </style>

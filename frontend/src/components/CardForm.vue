@@ -24,9 +24,10 @@
   max-width: 600px;
   border-radius: 20px;
   padding: 2em;
+  margin-top: 4em;
   display: flex;
   flex-direction: column;
-  /* gap: 1em; */
+  box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .card-title {

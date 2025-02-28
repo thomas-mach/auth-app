@@ -6,21 +6,35 @@
       </template>
       <template #message>
         <div class="message-placeholder">
-          <p class="message" v-show="isError">Lorem ipsum dolor sit, amet</p>
+          <p class="success-generic-message" v-if="successMessage">
+            {{ successMessage }}
+          </p>
+          <p class="error-generic-message" v-if="errorMessage">
+            {{ errorMessage }}
+          </p>
         </div>
       </template>
       <template #form>
-        <form novalidate @submit.prevent="submitForm">
+        <form novalidate @submit.prevent="hendelSingin">
+          <!-- INPUT EMAIL -->
           <label for="email">Email</label>
           <div class="input-wraper">
-            <input type="text" id="email" placeholder="Email Adress" />
+            <input
+              type="text"
+              :class="{ 'error-input': emailInputError || errorMessage }"
+              v-model="email"
+              id="email"
+              placeholder="Email Adress"
+            />
             <font-awesome-icon class="icon" :icon="['fas', 'envelope']" />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p class="error-message" v-if="emailInputError">
+              {{ emailInputError }}
             </p>
           </div>
+
+          <!-- INPUT PASSWORD -->
           <label for="password">Password</label>
           <div class="input-wraper">
             <font-awesome-icon
@@ -30,15 +44,16 @@
             />
             <input
               :type="type"
+              :class="{ 'error-input': passwordInputError || errorMessage }"
               id="password"
               placeholder="Enter Password"
               v-model="password"
-              @input="toggleIcon"
+              @input="toggleIcon()"
             />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p class="error-message" v-if="passwordInputError">
+              {{ passwordInputError }}
             </p>
           </div>
           <router-link to="/password-reset" class="password-reset-link"
@@ -62,14 +77,46 @@
 <script setup>
 import CardForm from "../components/CardForm.vue";
 import { ref } from "vue";
+import { signin } from "../api/authService.js";
+import { useRouter } from "vue-router";
 
 const icon = ref(["fas", "lock"]);
 const password = ref("");
+const email = ref("");
 const type = ref("password");
-let isError = ref(false);
+const router = useRouter();
+let successMessage = ref("");
+let errorMessage = ref("");
+let errorsBackend = ref([]);
+let emailInputError = ref("");
+let passwordInputError = ref("");
+
+const hendelSingin = async () => {
+  errorsBackend.value = [];
+  successMessage.value = "";
+  errorMessage.value = "";
+  emailInputError.value = "";
+  emailValidate();
+  passwordValidate();
+  try {
+    const data = await signin({
+      email: email.value,
+      password: password.value,
+    });
+    console.log("Login success:", data);
+    console.log("Response", data.message);
+    successMessage.value = data.message;
+    email.value = "";
+    password.value = "";
+    router.push("/");
+  } catch (error) {
+    console.log(error);
+    errorMessage.value = error.response.data.message;
+  }
+};
 
 const toggleIcon = () => {
-  if (password.value.length === 0) {
+  if (!password.value) {
     icon.value = ["fas", "lock"];
     type.value = "password";
   } else {
@@ -88,6 +135,26 @@ const showPassword = () => {
       icon.value = ["fas", "eye-slash"];
     }
   }
+};
+
+const emailValidate = () => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email.value) {
+    emailInputError.value = "The email is required";
+    return false;
+  } else if (!regex.test(email.value)) {
+    emailInputError.value = "Please provide a valid email address";
+    return false;
+  }
+  emailInputError.value = "";
+  return true;
+};
+
+const passwordValidate = () => {
+  if (!password.value) {
+    return (passwordInputError.value = "The password is required");
+  }
+  return (passwordInputError.value = "");
 };
 </script>
 
@@ -209,14 +276,33 @@ input:focus {
   margin: 0.5em 0 0.5em;
 }
 
-.message {
-  font-size: var(--fs-body);
-  /* font-weight: var(--fw-bold); */
-}
-
 .message-placeholder {
-  height: var(--fs-body);
+  min-height: var(--fs-body);
   margin: 0.5em 0 0.5em;
   color: var(--clr-error);
+}
+
+.success-generic-message {
+  font-size: var(--fs-body);
+  color: var(--clr-valid);
+  font-weight: var(--fw-bold);
+}
+
+.error-generic-message {
+  font-size: var(--fs-body);
+  color: var(--clr-error);
+  font-weight: var(--fw-bold);
+}
+
+.error-input {
+  border: 2px solid var(--clr-error);
+}
+
+.valid-input {
+  border: 2px solid var(--clr-valid);
+}
+
+.valid-input:focus {
+  border: 2px solid var(--clr-valid);
 }
 </style>

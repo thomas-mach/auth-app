@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, "The name is required"],
+      minlength: [2, "Name must be at least 2 characters"],
     },
     email: {
       type: String,
@@ -25,9 +26,10 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "The password is required"],
-      minlength: 8,
+      minlength: [8, "Password must be at least 8 characters."],
       select: false,
     },
+
     passwordConfirm: {
       type: String,
       required: [true, "The password is required"],

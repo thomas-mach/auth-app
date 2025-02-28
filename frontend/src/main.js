@@ -12,6 +12,7 @@ import {
   faEyeSlash,
   faEye,
   faUser,
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 
 import { library } from "@fortawesome/fontawesome-svg-core";
@@ -26,7 +27,8 @@ library.add(
   faLock,
   faEyeSlash,
   faEye,
-  faUser
+  faUser,
+  faXmark
 );
 const app = createApp(App);
 

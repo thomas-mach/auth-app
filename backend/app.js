@@ -5,6 +5,7 @@ const morgan = require("morgan");
 const globalErrorHandling = require("./controllers/errorController");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
+const cors = require("cors");
 require("./jobs/deleteOldUsers");
 
 const app = express();
@@ -15,6 +16,14 @@ app.use(helmet());
 // Attacchi di sniffing MIME
 // Injection di codice
 // Altri attacchi basati sugli header HTTP
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Sostituisci con il tuo dominio consentito
+    methods: "GET,POST,PUT,DELETE", // Specifica i metodi consentiti
+    credentials: true, // Se hai bisogno di inviare cookie o autorizzazioni
+  })
+);
 
 app.use(express.json());
 app.use(morgan("dev"));

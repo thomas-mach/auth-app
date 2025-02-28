@@ -27,7 +27,7 @@
       </template>
       <template #footer>
         <div class="create-acount-link-wraper">
-          <router-link to="/login" class="create-account-link"
+          <router-link to="/signin" class="create-account-link"
             >Back to Login</router-link
           >
         </div>
