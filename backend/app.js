@@ -20,7 +20,7 @@ app.use(helmet());
 app.use(
   cors({
     origin: "http://localhost:5173", // Sostituisci con il tuo dominio consentito
-    methods: "GET,POST,PUT,DELETE", // Specifica i metodi consentiti
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"], // Specifica i metodi consentiti
     credentials: true, // Se hai bisogno di inviare cookie o autorizzazioni
   })
 );

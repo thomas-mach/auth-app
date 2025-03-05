@@ -46,6 +46,18 @@
               >About</router-link
             >
           </li>
+          <li
+            v-if="isDesktop && authStore.user?.isLoggedIn"
+            class="custom-link-nav"
+            @click="showUserNav = false"
+          >
+            <router-link
+              to="/dash-board"
+              class="custom-link-nav"
+              exact-active-class="active"
+              >DashBoard</router-link
+            >
+          </li>
         </ul>
       </nav>
     </transition>
@@ -84,7 +96,7 @@
             class="nav-user__item"
             @click="showUserNav = false"
           >
-            <p>Welcome {{ authStore.user?.name }}</p>
+            <p class="user-name">{{ authStore.user?.name }}</p>
           </li>
           <li v-if="authStore.user?.isLoggedIn" class="nav-user__item">
             <router-link
@@ -95,7 +107,7 @@
             >
           </li>
           <li
-            v-if="!isDesktop"
+            v-if="!isDesktop && authStore.user?.isLoggedIn"
             class="nav-user__item"
             @click="showUserNav = false"
           >
@@ -111,12 +123,13 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import { RouterLink } from "vue-router";
 import { logout } from "../api/authService.js";
-import { useAuthStore } from "../store/storeAuth.js";
+import { RouterLink } from "vue-router";
 import { useRouter } from "vue-router";
+import { useAuthStore, useMessagesStore } from "../store/storeAuth.js";
 
 const authStore = useAuthStore();
+const messagesStore = useMessagesStore();
 const router = useRouter();
 let showNav = ref(false);
 let showUserNav = ref(false);
@@ -124,10 +137,11 @@ let isDesktop = ref(window.innerWidth > 768);
 
 const hendeleLogout = async () => {
   try {
-    const data = await logout();
+    const response = await logout();
     authStore.login({ isLoggedIn: false });
+    messagesStore.setMessage(response.message);
     router.push("/");
-    console.log(data);
+    console.log(response);
   } catch (error) {
     console.log(error);
   }
@@ -247,6 +261,12 @@ onUnmounted(() => {
   padding: 0.25em;
 }
 
+.user-name {
+  color: white;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-bold);
+}
+
 /* HAMBURGER */
 .hamburger {
   background: var(--clr-accent);
@@ -357,6 +377,7 @@ onUnmounted(() => {
   .nav__list {
     list-style: none;
     display: flex;
+    align-items: center;
     height: 100%;
     flex-direction: row;
     padding: 0;

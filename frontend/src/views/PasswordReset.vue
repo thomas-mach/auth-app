@@ -2,33 +2,84 @@
   <div class="container">
     <CardForm>
       <template #title>
-        <p class="title">Reset Password</p>
+        <p class="title">Set new Password</p>
       </template>
       <template #message>
         <div class="message-placeholder">
-          <p class="message" v-show="isError">Lorem ipsum dolor sit, amet</p>
+          <p class="success-generic-message" v-if="successMessage">
+            {{ successMessage }}
+          </p>
+          <p class="error-generic-message" v-if="errorMessage">
+            {{ errorMessage }}
+          </p>
         </div>
       </template>
       <template #form>
-        <form novalidate @submit.prevent="submitForm">
-          <!-- INPUT EMIAL -->
-          <label for="email">Email</label>
+        <form novalidate @submit.prevent="hendleResetPassword">
+          <!-- INPUT PASSWORD -->
+          <label for="password">New Password</label>
           <div class="input-wraper">
-            <input type="text" id="email" placeholder="Email Adress" />
-            <font-awesome-icon class="icon" :icon="['fas', 'envelope']" />
+            <font-awesome-icon
+              class="icon"
+              :icon="icon"
+              @click="showPassword"
+            />
+            <input
+              :type="type"
+              :class="{
+                'error-input': getError('password'),
+                'valid-input': passwordValidate(),
+              }"
+              id="password"
+              placeholder="Enter Password"
+              v-model="password"
+              @input="toggleIcon()"
+            />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p
+              class="error-message"
+              v-if="getError('password') && !passwordValidate()"
+            >
+              {{ getError("password") }}
             </p>
           </div>
-          <button class="btn" @click="test">SEND RESET TOKEN</button>
+
+          <!-- INPUT PASSWORD CONFIRM -->
+          <label for="password-confirm">New Password Confirm</label>
+          <div class="input-wraper">
+            <font-awesome-icon
+              class="icon"
+              :icon="icon"
+              @click="showPassword"
+            />
+            <input
+              :type="type"
+              :class="{
+                'error-input': getError('passwordConfirm'),
+                'valid-input': passwordConfirmValidate(),
+              }"
+              id="password-confirm"
+              placeholder="Confirm Password"
+              v-model="passwordConfirm"
+              @input="toggleIcon()"
+            />
+          </div>
+          <div class="error-message-placeholder">
+            <p
+              class="error-message"
+              v-if="getError('passwordConfirm') && !passwordConfirmValidate()"
+            >
+              {{ getError("passwordConfirm") }}
+            </p>
+          </div>
+          <button class="btn" type="submit">SET NEW PASSWORD</button>
         </form>
       </template>
       <template #footer>
         <div class="create-acount-link-wraper">
           <router-link to="/signin" class="create-account-link"
-            >Back to Login</router-link
+            >Login to Account</router-link
           >
         </div>
       </template>
@@ -39,24 +90,58 @@
 <script setup>
 import CardForm from "../components/CardForm.vue";
 import { ref } from "vue";
+import { resetPassword } from "../api/authService.js";
+import { useRoute, useRouter } from "vue-router";
+const router = useRouter();
+const route = useRoute();
+const token = route.query.token;
 
 const icon = ref(["fas", "lock"]);
 const password = ref("");
+const passwordConfirm = ref("");
 const type = ref("password");
-let isError = ref(false);
+let successMessage = ref("");
+let errorMessage = ref("");
+let errorsBackend = ref([]);
+
+const hendleResetPassword = async () => {
+  errorsBackend.value = [];
+  successMessage.value = "";
+  errorMessage.value = "";
+  try {
+    const response = await resetPassword({
+      token: token,
+      password: password.value,
+      passwordConfirm: passwordConfirm.value,
+    });
+    successMessage.value = response.data.message;
+    password.value = "";
+    passwordConfirm.value = "";
+    router.push("/signin");
+  } catch (error) {
+    console.log(error);
+    errorMessage.value = error.response?.data?.message;
+    if (error.response?.data?.errors) {
+      errorsBackend.value = error.response.data.errors;
+      console.log(errorsBackend.value);
+    } else {
+      errorsBackend.value = [{ field: "general", message: "Error" }];
+    }
+  }
+};
 
 const toggleIcon = () => {
-  if (password.value.length === 0) {
-    icon.value = ["fas", "lock"];
-    type.value = "password";
-  } else {
+  if (password.value || passwordConfirm.value) {
     icon.value =
       type.value === "password" ? ["fas", "eye-slash"] : ["fas", "eye"];
+  } else {
+    icon.value = ["fas", "lock"];
+    type.value = "password";
   }
 };
 
 const showPassword = () => {
-  if (password.value.length > 0) {
+  if (password.value.length > 0 || passwordConfirm.value.length > 0) {
     if (type.value === "password") {
       type.value = "text";
       icon.value = ["fas", "eye"];
@@ -67,8 +152,17 @@ const showPassword = () => {
   }
 };
 
-const test = () => {
-  isError.value = !isError.value;
+const getError = (field) => {
+  const errorObj = errorsBackend.value.find((error) => error.field === field);
+  return errorObj ? errorObj.message : null;
+};
+
+const passwordValidate = () => password.value.length >= 8;
+const passwordConfirmValidate = () => {
+  return (
+    passwordConfirm.value.length >= 8 &&
+    passwordConfirm.value === password.value
+  );
 };
 </script>
 
@@ -187,18 +281,37 @@ input:focus {
 
 .error-message-placeholder {
   height: var(--fs-small);
-  margin: 0.4em 0 0.3em;
-}
-
-.message {
-  font-size: var(--fs-body);
-  /* font-weight: var(--fw-bold); */
+  margin: 0.5em 0 0.5em;
 }
 
 .message-placeholder {
-  height: var(--fs-body);
+  min-height: var(--fs-body);
   margin: 0.5em 0 0.5em;
   color: var(--clr-error);
+}
+
+.success-generic-message {
+  font-size: var(--fs-body);
+  color: var(--clr-valid);
+  font-weight: var(--fw-bold);
+}
+
+.error-generic-message {
+  font-size: var(--fs-body);
+  color: var(--clr-error);
+  font-weight: var(--fw-bold);
+}
+
+.error-input {
+  border: 2px solid var(--clr-error);
+}
+
+.valid-input {
+  border: 2px solid var(--clr-valid);
+}
+
+.valid-input:focus {
+  border: 2px solid var(--clr-valid);
 }
 
 .title {

@@ -2,7 +2,7 @@
   <div class="container">
     <CardForm>
       <template #title>
-        <p>Sign in</p>
+        <p class="title">Reset Password</p>
       </template>
       <template #message>
         <div class="message-placeholder">
@@ -15,8 +15,8 @@
         </div>
       </template>
       <template #form>
-        <form novalidate @submit.prevent="hendelSignin">
-          <!-- INPUT EMAIL -->
+        <form novalidate @submit.prevent="hendleForgotPasssword">
+          <!-- INPUT EMIAL -->
           <label for="email">Email</label>
           <div class="input-wraper">
             <input
@@ -33,47 +33,13 @@
               {{ emailInputError }}
             </p>
           </div>
-
-          <!-- INPUT PASSWORD -->
-          <label for="password">Password</label>
-          <div class="input-wraper">
-            <font-awesome-icon
-              class="icon"
-              :icon="icon"
-              @click="showPassword"
-            />
-            <input
-              :type="type"
-              :class="{ 'error-input': passwordInputError || errorMessage }"
-              id="password"
-              placeholder="Enter Password"
-              v-model="password"
-              @input="toggleIcon()"
-            />
-          </div>
-          <div class="error-message-placeholder">
-            <p class="error-message" v-if="passwordInputError">
-              {{ passwordInputError }}
-            </p>
-          </div>
-          <router-link to="/password-forgot" class="password-reset-link"
-            >Forgot Password?</router-link
-          >
-          <div
-            v-if="!isEmailVerified"
-            class="password-reset-link"
-            @click="hendleResendEmail()"
-          >
-            Resend verification email
-          </div>
-          <button class="btn">SIGN IN</button>
+          <button class="btn" @click="test">SEND RESET TOKEN</button>
         </form>
       </template>
       <template #footer>
         <div class="create-acount-link-wraper">
-          <p>Don't Have an Account?</p>
-          <router-link to="/signup" class="create-account-link"
-            >Create Account</router-link
+          <router-link to="/signin" class="create-account-link"
+            >Back to Login</router-link
           >
         </div>
       </template>
@@ -84,91 +50,31 @@
 <script setup>
 import CardForm from "../components/CardForm.vue";
 import { ref } from "vue";
-import { signin, resendEmail } from "../api/authService.js";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "../store/storeAuth.js";
+import { forgotPassword } from "../api/authService.js";
 
-const authStore = useAuthStore();
-const icon = ref(["fas", "lock"]);
-const password = ref("");
 const email = ref("");
-const type = ref("password");
-const router = useRouter();
+let emailInputError = ref("");
 let successMessage = ref("");
 let errorMessage = ref("");
-let errorsBackend = ref([]);
-let emailInputError = ref("");
-let passwordInputError = ref("");
-let isEmailVerified = ref(true);
 
-const hendelSignin = async () => {
-  errorsBackend.value = [];
+const hendleForgotPasssword = async () => {
+  console.log("email.value", email.value);
   successMessage.value = "";
   errorMessage.value = "";
   emailInputError.value = "";
-  emailValidate();
-  passwordValidate();
-  try {
-    const response = await signin({
-      email: email.value,
-      password: password.value,
-    });
-    console.log("Login success:", response);
-    console.log("Response", response.message);
-    successMessage.value = response.message;
-    email.value = "";
-    password.value = "";
-    router.push("/dash-board");
-    authStore.login({ isLoggedIn: true, name: response.data.user.name });
-    console.log("from store", authStore.user);
-  } catch (error) {
-    console.log(error);
-    errorMessage.value = error.response.data.message;
-    isEmailVerified.value = error.response?.data?.isVerified ?? true;
+  if (!emailValidate()) {
+    return;
   }
-};
-
-const hendleResendEmail = async () => {
-  errorsBackend.value = [];
-  successMessage.value = "";
-  errorMessage.value = "";
-  emailInputError.value = "";
-  emailValidate();
-  passwordValidate();
   try {
-    const response = await resendEmail({
+    const response = await forgotPassword({
       email: email.value,
-      password: password.value,
     });
     successMessage.value = response.message;
     email.value = "";
-    password.value = "";
+    console.log(response);
   } catch (error) {
     console.log(error);
     errorMessage.value = error.response.data.message;
-    isEmailVerified.value = error.response.data.isVerified;
-  }
-};
-
-const toggleIcon = () => {
-  if (!password.value) {
-    icon.value = ["fas", "lock"];
-    type.value = "password";
-  } else {
-    icon.value =
-      type.value === "password" ? ["fas", "eye-slash"] : ["fas", "eye"];
-  }
-};
-
-const showPassword = () => {
-  if (password.value.length > 0) {
-    if (type.value === "password") {
-      type.value = "text";
-      icon.value = ["fas", "eye"];
-    } else {
-      type.value = "password";
-      icon.value = ["fas", "eye-slash"];
-    }
   }
 };
 
@@ -183,13 +89,6 @@ const emailValidate = () => {
   }
   emailInputError.value = "";
   return true;
-};
-
-const passwordValidate = () => {
-  if (!password.value) {
-    return (passwordInputError.value = "The password is required");
-  }
-  return (passwordInputError.value = "");
 };
 </script>
 
@@ -308,13 +207,26 @@ input:focus {
 
 .error-message-placeholder {
   height: var(--fs-small);
-  margin: 0.5em 0 0.5em;
+  margin: 0.4em 0 0.3em;
+}
+
+.message {
+  font-size: var(--fs-body);
+  /* font-weight: var(--fw-bold); */
 }
 
 .message-placeholder {
   min-height: var(--fs-body);
   margin: 0.5em 0 0.5em;
   color: var(--clr-error);
+}
+
+.title {
+  font-size: var(--fs-h2);
+}
+
+.error-input {
+  border: 2px solid var(--clr-error);
 }
 
 .success-generic-message {
@@ -327,17 +239,5 @@ input:focus {
   font-size: var(--fs-body);
   color: var(--clr-error);
   font-weight: var(--fw-bold);
-}
-
-.error-input {
-  border: 2px solid var(--clr-error);
-}
-
-.valid-input {
-  border: 2px solid var(--clr-valid);
-}
-
-.valid-input:focus {
-  border: 2px solid var(--clr-valid);
 }
 </style>

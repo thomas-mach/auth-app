@@ -16,7 +16,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
 exports.softDeleteUser = catchAsync(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
     req.user.id, //viene preso dal middleware di autenticazione
-    { isActive: false, deactivatedAt: new Date() },
+    { isActive: false, isVerified: false, deactivatedAt: new Date() },
     { new: true }
   );
 

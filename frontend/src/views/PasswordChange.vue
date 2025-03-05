@@ -6,13 +6,18 @@
       </template>
       <template #message>
         <div class="message-placeholder">
-          <p class="message" v-show="isError">Lorem ipsum dolor sit, amet</p>
+          <p class="success-generic-message" v-if="successMessage">
+            {{ successMessage }}
+          </p>
+          <p class="error-generic-message" v-if="errorMessage">
+            {{ errorMessage }}
+          </p>
         </div>
       </template>
       <template #form>
-        <form novalidate @submit.prevent="submitForm">
-          <!-- INPUT OLD PASSWORD -->
-          <label for="old-password">Old Password</label>
+        <form novalidate @submit.prevent="hendleUpdatePassword">
+          <!-- INPUT CURRENT PASSWORD -->
+          <label for="current-password">Current Password</label>
           <div class="input-wraper">
             <font-awesome-icon
               class="icon"
@@ -20,16 +25,21 @@
               @click="showPassword"
             />
             <input
+              :class="{
+                'error-input':
+                  passwordCurrentInputError ||
+                  errorMessage === 'Your current password is wrong',
+              }"
               :type="type"
-              id="old-password"
+              id="current-password"
               placeholder="Enter Password"
-              v-model="password"
+              v-model="passwordCurrent"
               @input="toggleIcon"
             />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p class="error-message" v-if="passwordCurrentInputError">
+              {{ passwordCurrentInputError }}
             </p>
           </div>
           <!-- INPUT NEW PASSWORD -->
@@ -41,21 +51,34 @@
               @click="showPassword"
             />
             <input
+              :class="{
+                'error-input':
+                  passwordNewInputError ||
+                  errorMessage ===
+                    'Your new password must be different from the old one',
+                'valid-input':
+                  passwordConfirmValidate() &&
+                  errorMessage !==
+                    'Your new password must be different from the old one',
+              }"
               :type="type"
               id="password"
               placeholder="Enter Password"
-              v-model="password"
+              v-model="passwordNew"
               @input="toggleIcon"
             />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p
+              class="error-message"
+              v-if="passwordNewInputError && !passwordConfirmValidate()"
+            >
+              {{ passwordNewInputError }}
             </p>
           </div>
 
           <!-- INPUT PASSWORD CONFIRM -->
-          <label for="password-confirm">Confirm Password</label>
+          <label for="password-confirm">Confirm New Password</label>
           <div class="input-wraper">
             <font-awesome-icon
               class="icon"
@@ -63,29 +86,35 @@
               @click="showPassword"
             />
             <input
+              :class="{
+                'error-input':
+                  passwordConfirmInputError ||
+                  errorMessage ===
+                    'Your new password must be different from the old one',
+                'valid-input':
+                  passwordConfirmValidate() &&
+                  errorMessage !==
+                    'Your new password must be different from the old one',
+              }"
               :type="type"
               id="password-confirm"
               placeholder="Enter Password"
-              v-model="password"
+              v-model="passwordConfirm"
               @input="toggleIcon"
             />
           </div>
           <div class="error-message-placeholder">
-            <p class="error-message" v-show="isError">
-              Lorem ipsum dolor sit amet.
+            <p
+              class="error-message"
+              v-if="passwordConfirmInputError && !passwordConfirmValidate()"
+            >
+              {{ passwordConfirmInputError }}
             </p>
           </div>
-          <button class="btn" @click="test">CHANGE PASSWORD</button>
+          <button class="btn">CHANGE PASSWORD</button>
         </form>
       </template>
-      <template #footer>
-        <div class="create-acount-link-wraper">
-          <p>Already Have an Account?</p>
-          <router-link to="/login" class="create-account-link"
-            >Login to Account</router-link
-          >
-        </div>
-      </template>
+      <template #footer> </template>
     </CardForm>
   </div>
 </template>
@@ -93,24 +122,81 @@
 <script setup>
 import CardForm from "../components/CardForm.vue";
 import { ref } from "vue";
+import { logout, updatePassword } from "../api/authService.js";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "../store/storeAuth.js";
+
+const router = useRouter();
+const authStore = useAuthStore();
 
 const icon = ref(["fas", "lock"]);
-const password = ref("");
 const type = ref("password");
-let isError = ref(false);
+
+const passwordCurrent = ref("");
+const passwordNew = ref("");
+const passwordConfirm = ref("");
+
+let successMessage = ref("");
+let errorMessage = ref("");
+
+let passwordCurrentInputError = ref("");
+let passwordNewInputError = ref("");
+let passwordConfirmInputError = ref("");
+
+const hendleUpdatePassword = async () => {
+  successMessage.value = "";
+  errorMessage.value = "";
+
+  inputValidate();
+  console.log("input validate", inputValidate());
+  try {
+    const response = await updatePassword({
+      password: passwordCurrent.value,
+      passwordNew: passwordNew.value,
+      passwordConfirm: passwordConfirm.value,
+    });
+    successMessage.value = response.data.message;
+    passwordCurrent.value = "";
+    passwordNew.value = "";
+    passwordConfirm.value = "";
+    hendeleLogout();
+  } catch (error) {
+    console.log(error);
+    errorMessage.value = error.response?.data?.message;
+  }
+};
+
+const hendeleLogout = async () => {
+  try {
+    const data = await logout();
+    authStore.login({ isLoggedIn: false });
+    router.push("/signin");
+    console.log(data);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
 const toggleIcon = () => {
-  if (password.value.length === 0) {
-    icon.value = ["fas", "lock"];
-    type.value = "password";
-  } else {
+  if (
+    passwordCurrent.value.length > 0 ||
+    passwordNew.value.length > 0 ||
+    passwordConfirm.value.length > 0
+  ) {
     icon.value =
       type.value === "password" ? ["fas", "eye-slash"] : ["fas", "eye"];
+  } else {
+    icon.value = ["fas", "lock"];
+    type.value = "password";
   }
 };
 
 const showPassword = () => {
-  if (password.value.length > 0) {
+  if (
+    passwordCurrent.value.length > 0 ||
+    password.New.length > 0 ||
+    passwordConfirm.value.length > 0
+  ) {
     if (type.value === "password") {
       type.value = "text";
       icon.value = ["fas", "eye"];
@@ -121,8 +207,42 @@ const showPassword = () => {
   }
 };
 
-const test = () => {
-  isError.value = !isError.value;
+const inputValidate = () => {
+  passwordCurrentInputError.value = "";
+  passwordNewInputError.value = "";
+  passwordConfirmInputError.value = "";
+
+  let isValid = true; // Assume che i dati siano validi all'inizio
+
+  if (!passwordCurrent.value) {
+    passwordCurrentInputError.value = "The current password is required";
+    isValid = false;
+  }
+
+  if (!passwordNew.value) {
+    passwordNewInputError.value = "The new password is required";
+    isValid = false;
+  } else if (passwordNew.value.length < 8) {
+    passwordNewInputError.value = "Password must be at least 8 characters.";
+    isValid = false;
+  }
+
+  if (!passwordConfirm.value) {
+    passwordConfirmInputError.value = "The confirm password is required";
+    isValid = false;
+  } else if (passwordConfirm.value.length < 8) {
+    passwordConfirmInputError.value = "Password must be at least 8 characters.";
+    isValid = false;
+  }
+
+  return isValid; // Ritorna true se tutto è valido, altrimenti false
+};
+
+const passwordConfirmValidate = () => {
+  return (
+    passwordConfirm.value.length >= 8 &&
+    passwordConfirm.value === passwordNew.value
+  );
 };
 </script>
 
@@ -257,5 +377,28 @@ input:focus {
 
 .title {
   font-size: var(--fs-h2);
+}
+
+.success-generic-message {
+  font-size: var(--fs-body);
+  color: var(--clr-valid);
+  font-weight: var(--fw-bold);
+}
+
+.error-generic-message {
+  font-size: var(--fs-body);
+  color: var(--clr-error);
+  font-weight: var(--fw-bold);
+}
+
+.error-input {
+  border: 2px solid var(--clr-error);
+}
+
+.valid-input {
+  border: 2px solid var(--clr-valid);
+}
+.valid-input:focus {
+  border: 2px solid var(--clr-valid);
 }
 </style>
