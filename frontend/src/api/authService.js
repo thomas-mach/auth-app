@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:3003/v1/auth";
-const API_URL_USER = "http://localhost:3003/v1/users";
+const API_URL = import.meta.env.VITE_API_URL;
+const API_URL_USER = import.meta.env.VITE_API_URL_USER;
 
 export const signup = async (userData) => {
   console.log("userData", userData);
