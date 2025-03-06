@@ -16,7 +16,6 @@
           src="/images/pattern-hills.svg"
           alt="Pattern Hills"
         />
-        alt="pattern-hills" />
       </footer>
     </div>
   </div>

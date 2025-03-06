@@ -8,5 +8,6 @@ export default defineConfig({
   plugins: [vue(), removeConsole()],
   build: {
     outDir: path.resolve(__dirname, "../backend/public"),
+    emptyOutDir: true,
   },
 });
