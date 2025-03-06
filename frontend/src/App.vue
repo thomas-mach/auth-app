@@ -12,9 +12,11 @@
       <footer class="footer">
         <img
           class="hills"
-          src="../images/pattern-hills.svg"
-          alt="pattern-hills"
+          <img
+          src="/images/pattern-hills.svg"
+          alt="Pattern Hills"
         />
+        alt="pattern-hills" />
       </footer>
     </div>
   </div>
