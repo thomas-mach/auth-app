@@ -175,7 +175,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
   //   })
   // .redirect(`${process.env.FRONTEND_URL}/login`);
 
-  res.redirect(`http://localhost:5173/signin`);
+  res.redirect(`${process.env.FRONTEND_URL}/signin`);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
