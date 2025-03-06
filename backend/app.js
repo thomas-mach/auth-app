@@ -6,9 +6,16 @@ const globalErrorHandling = require("./controllers/errorController");
 const cookieParser = require("cookie-parser");
 const helmet = require("helmet");
 const cors = require("cors");
+const path = require("path");
 require("./jobs/deleteOldUsers");
 
 const app = express();
+
+app.use(express.static(path.join(__dirname, "public")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 app.use(helmet());
 //contro atacchi basati sul headers Cross-Site Scripting (XSS)

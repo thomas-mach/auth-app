@@ -5,5 +5,7 @@ import removeConsole from "vite-plugin-remove-console";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [vue(), removeConsole()],
-  build: {},
+  build: {
+    outDir: path.resolve(__dirname, "../backend/public"),
+  },
 });
