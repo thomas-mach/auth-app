@@ -4,11 +4,6 @@
     <nav>
       <ul>
         <li>
-          <router-link to="/dash-board/name-change" class="custom-link"
-            >Change name</router-link
-          >
-        </li>
-        <li>
           <router-link to="/dash-board/password-change" class="custom-link"
             >Change password</router-link
           >
@@ -22,9 +17,27 @@
     </nav>
     <router-view />
   </div>
+  <p class="message" v-if="messagesStore.message && messageTime">
+    {{ messagesStore.message }}
+  </p>
 </template>
 
-<script setup></script>
+<script setup>
+import { ref } from "vue";
+import { useMessagesStore } from "../store/storeAuth.js";
+
+const messagesStore = useMessagesStore();
+let messageTime = ref(true);
+
+const setFalseAfterDelay = () => {
+  setTimeout(() => {
+    messageTime.value = false;
+    messagesStore.setMessage("");
+  }, 3500);
+};
+
+setFalseAfterDelay();
+</script>
 
 <style scoped>
 .wrapper {
@@ -46,6 +59,13 @@ h2 {
 
 ul {
   list-style: none;
+}
+
+.message {
+  text-align: center;
+  margin-top: 1em;
+  font-size: var(--fs-h2);
+  color: var(--clr-valid);
 }
 
 @media (min-width: 768px) {

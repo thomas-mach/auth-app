@@ -6,22 +6,22 @@ const router = express.Router();
 
 const authLimiter = limiter({
   windowsMs: 5 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === "production" ? 5 : 100,
   headers: true,
   handler: (req, res) => {
     res.status(429).json({
-      error: "Troppi tentativi! Riprova tra qualche minuto.",
+      status: "failed",
+      message: "Too many attempts! Please try again in a few minutes.",
     });
   },
-  message: "Trope richieste riprova piu tardi",
 });
 
 router.post("/signup", authLimiter, authController.signup);
-router.get("/verify", authController.verifyEmail);
+router.get("/verify", authLimiter, authController.verifyEmail);
 router.post("/login", authLimiter, authController.login);
 router.post("/logout", authController.logout);
-router.post("/resendEmail", authController.resendEmail);
-router.post("/forgotPassword", authController.forgotPassword);
+router.post("/resendEmail", authLimiter, authController.resendEmail);
+router.post("/forgotPassword", authLimiter, authController.forgotPassword);
 router.patch("/resetPassword/:token", authController.resetPassword);
 router.patch(
   "/updateMyPassword",

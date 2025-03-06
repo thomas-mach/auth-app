@@ -99,12 +99,12 @@
             <p class="user-name">{{ authStore.user?.name }}</p>
           </li>
           <li v-if="authStore.user?.isLoggedIn" class="nav-user__item">
-            <router-link
-              to="/logout"
-              class="custom-link-signup"
+            <button
+              class="custom-link-logout"
               @click="(showUserNav = false), hendeleLogout()"
-              >Logout</router-link
             >
+              Logout
+            </button>
           </li>
           <li
             v-if="!isDesktop && authStore.user?.isLoggedIn"
@@ -245,6 +245,17 @@ onUnmounted(() => {
   /* text-decoration: none; */
   color: var(--clr-light);
   font-weight: var(--fw-bold);
+}
+
+.custom-link-logout {
+  background-color: inherit;
+  border: none;
+  color: var(--clr-light);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  padding: 0;
+  text-decoration: underline;
 }
 
 .user-icon {
@@ -392,7 +403,8 @@ onUnmounted(() => {
   }
 
   .custom-link-signin,
-  .custom-link-signup {
+  .custom-link-signup,
+  .custom-link-logout {
     text-decoration: none;
     color: white;
     font-weight: var(--fw-bold);
@@ -400,10 +412,12 @@ onUnmounted(() => {
     border-radius: 0.5em;
     border: 1px solid var(--clr-accent);
     background-color: inherit;
+    cursor: pointer;
   }
 
   .custom-link-signin:hover,
-  .custom-link-signup:hover {
+  .custom-link-signup:hover,
+  .custom-link-logout:hover {
     background-color: var(--clr-accent);
   }
 

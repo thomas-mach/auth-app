@@ -19,9 +19,9 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // Sostituisci con il tuo dominio consentito
-    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"], // Specifica i metodi consentiti
-    credentials: true, // Se hai bisogno di inviare cookie o autorizzazioni
+    origin: process.env.FRONTEND_URL,
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+    credentials: true,
   })
 );
 
@@ -29,7 +29,6 @@ app.use(express.json());
 app.use(morgan("dev"));
 app.use(cookieParser());
 
-// Registrazione delle rotte principali
 app.use("/v1/auth", authRouter);
 app.use("/v1/users", userRouter);
 

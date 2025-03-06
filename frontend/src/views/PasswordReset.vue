@@ -114,16 +114,13 @@ const hendleResetPassword = async () => {
       password: password.value,
       passwordConfirm: passwordConfirm.value,
     });
-    successMessage.value = response.data.message;
     password.value = "";
     passwordConfirm.value = "";
     router.push("/signin");
   } catch (error) {
-    console.log(error);
     errorMessage.value = error.response?.data?.message;
     if (error.response?.data?.errors) {
       errorsBackend.value = error.response.data.errors;
-      console.log(errorsBackend.value);
     } else {
       errorsBackend.value = [{ field: "general", message: "Error" }];
     }

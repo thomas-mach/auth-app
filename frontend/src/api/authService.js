@@ -16,12 +16,11 @@ export const signup = async (userData) => {
 };
 
 export const signin = async (userData) => {
-  console.log("userData", userData);
   try {
     const response = await axios.post(`${API_URL}/login`, userData, {
       withCredentials: true,
     });
-    return response.data;
+    return response;
   } catch (error) {
     throw error;
   }

@@ -86,9 +86,10 @@ import CardForm from "../components/CardForm.vue";
 import { ref } from "vue";
 import { signin, resendEmail } from "../api/authService.js";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "../store/storeAuth.js";
+import { useAuthStore, useMessagesStore } from "../store/storeAuth.js";
 
 const authStore = useAuthStore();
+const authMessage = useMessagesStore();
 const icon = ref(["fas", "lock"]);
 const password = ref("");
 const email = ref("");
@@ -113,18 +114,15 @@ const hendelSignin = async () => {
       email: email.value,
       password: password.value,
     });
-    console.log("Login success:", response);
-    console.log("Response", response.message);
-    successMessage.value = response.message;
     email.value = "";
     password.value = "";
-    router.push("/dash-board");
+    authMessage.setMessage("You are loged in!");
     authStore.login({ isLoggedIn: true, name: response.data.user.name });
-    console.log("from store", authStore.user);
-  } catch (error) {
-    console.log(error);
-    errorMessage.value = error.response.data.message;
-    isEmailVerified.value = error.response?.data?.isVerified ?? true;
+    router.push("/dash-board");
+  } catch (err) {
+    console.log("Error Response:", err.response);
+    errorMessage.value = err.response.data.message;
+    isEmailVerified.value = err.response?.data?.isVerified ?? true;
   }
 };
 
@@ -143,9 +141,10 @@ const hendleResendEmail = async () => {
     successMessage.value = response.message;
     email.value = "";
     password.value = "";
+    console.log(response);
   } catch (error) {
-    console.log(error);
-    errorMessage.value = error.response.data.message;
+    errorMessage.value = error.error;
+    // errorMessage.value = error.response.data.message;
     isEmailVerified.value = error.response.data.isVerified;
   }
 };
@@ -249,6 +248,7 @@ input:focus {
   font-weight: var(--fw-bold);
   color: var(--clr-dark-light);
   align-self: flex-start;
+  cursor: pointer;
 }
 
 .password-reset-link:hover {

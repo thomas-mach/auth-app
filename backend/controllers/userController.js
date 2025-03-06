@@ -1,17 +1,17 @@
 const User = require("../model/userModel");
 const catchAsync = require("../utils/catchAsync");
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const users = await User.find();
+// exports.getAllUsers = catchAsync(async (req, res, next) => {
+//   const users = await User.find();
 
-  res.status(200).json({
-    data: {
-      users: users,
-    },
-    status: "success",
-    message: "Get all users rout",
-  });
-});
+//   res.status(200).json({
+//     data: {
+//       users: users,
+//     },
+//     status: "success",
+//     message: "Get all users rout",
+//   });
+// });
 
 exports.softDeleteUser = catchAsync(async (req, res, next) => {
   const user = await User.findByIdAndUpdate(
@@ -32,6 +32,6 @@ exports.softDeleteUser = catchAsync(async (req, res, next) => {
 
   res.status(200).json({
     status: "success",
-    message: "Il tuo account è stato disattivato con successo!",
+    message: "Your account has been successfully deactivated!",
   });
 });

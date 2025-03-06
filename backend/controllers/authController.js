@@ -14,25 +14,44 @@ const signToken = (id, duration) =>
   });
 
 const createSendToken = (user, status, res, duration) => {
+  const {
+    name,
+    email,
+    role,
+    isVerified,
+    isActive,
+    profileImage,
+    lastLogin,
+    createdAt,
+    updatedAt,
+  } = user;
+
   const token = signToken(user._id, duration);
-  console.log(user._id);
-  const decodedRaw = jwt.decode(token); // Decodifica senza verificare
-  console.log("Decoded RAW Token:", decodedRaw);
+
   const cookieOptions = {
     expires: new Date(Date.now() + ms(duration)),
     secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     sameSite: "Lax",
+    // sameSite: process.env.COOKIE_SAMESITE || "Lax"
     path: "/",
   };
+
   res.cookie("jwt", token, cookieOptions);
   user.password = undefined;
-  res.status(status).json({
+  res.status(200).json({
     status: "success",
-    data: {
-      user,
+    user: {
+      name,
+      email,
+      role,
+      isVerified,
+      isActive,
+      profileImage,
+      lastLogin,
+      createdAt,
+      updatedAt,
     },
-    // token: token
   });
 };
 
@@ -42,25 +61,24 @@ exports.signup = catchAsync(async (req, res, next) => {
   const existingUser = await User.findOne({ email });
 
   if (existingUser) {
-    if (!existingUser.isActive) {
-      existingUser.isActive = true;
-      existingUser.isVerified = false;
+    if (!existingUser.isActive && existingUser.lastLogin !== null) {
       existingUser.password = password;
       existingUser.passwordConfirm = passwordConfirm;
       existingUser.name = name;
       await existingUser.save({ validateBeforeSave: false });
 
-      // Invia la conferma email per riattivazione
       const verificationToken = signToken(existingUser._id, "1h");
       const verificationUrl = `${req.protocol}://${req.get(
         "host"
       )}/v1/auth/verify?token=${verificationToken}`;
 
       await sendEmail({
-        // email: existingUser.email,
-        email: "m4chtomasz@gmail.com",
+        email: existingUser.email,
         subject: "Confirm the reactivation of your account.",
-        html: emailMessage.messageNewUser(existingUser.name, verificationUrl),
+        html: emailMessage.messageExsistingUser(
+          existingUser.name,
+          verificationUrl
+        ),
       });
 
       return res.status(200).json({
@@ -83,7 +101,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     isVerified: false,
   });
 
-  // Genera un token di verifica (es. 1h di validita)
+  // Genera un token di verifica
   const verificationToken = signToken(newUser._id, "1h");
 
   // Crea il link di verifica
@@ -94,8 +112,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   // Invia l'email di conferma
   try {
     await sendEmail({
-      // email: newUser.email,
-      email: "m4chtomasz@gmail.com",
+      email: newUser.email,
       subject: "Confirm the activation of your account.",
       html: emailMessage.messageNewUser(newUser.name, verificationUrl),
     });
@@ -164,14 +181,8 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
 exports.login = catchAsync(async (req, res, next) => {
   const { email, password } = req.body;
 
-  const sofDeletedUser = await User.findOne({ email });
-
   if (!email || !password) {
     return next(new AppError("Please provide email and password"), 400);
-  }
-
-  if (!sofDeletedUser.isActive) {
-    return next(new AppError("Incorect email or password", 401));
   }
 
   const user = await User.findOne({ email }).select("+password");
@@ -182,19 +193,20 @@ exports.login = catchAsync(async (req, res, next) => {
 
   if (!user.isVerified) {
     res.status(400).json({
-      status: "faild",
+      status: "failed",
       message: "You need verify yor email to login",
       email: user.email,
       name: user.name,
       isVerified: user.isVerified,
     });
 
-    return next(new AppError("You need verify yor email to login"), 400);
+    if (!user.isActive) {
+      return next(new AppError("Your account is deactivated", 401));
+    }
   }
 
   user.lastLogin = Date.now();
   await user.save({ validateBeforeSave: false });
-  console.log("user id log in ", user._id);
   createSendToken(user, 201, res, "7d");
 });
 
@@ -239,8 +251,7 @@ exports.resendEmail = catchAsync(async (req, res, next) => {
     )}/v1/auth/verify?token=${verificationToken}`;
 
     await sendEmail({
-      // email: existingUser.email,
-      email: "m4chtomasz@gmail.com",
+      email: existingUser.email,
       subject: "Confirm the activation of your account.",
       html: emailMessage.messageNewUser(user.name, verificationUrl),
     });
@@ -294,28 +305,28 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   if (!req.body.email) {
     return next(new AppError("Please enter your email adress", 404));
   }
-  // 1) Get user based on posted email
+
   const user = await User.findOne({ email: req.body.email });
 
   if (!user) {
     return next(new AppError("There is no user with this email adress", 404));
   }
 
-  // 2) Generate the random reset token
   const resetToken = user.createResetPasswordToken();
   await user.save({ validateBeforeSave: false });
 
-  // 3) Send it to user email
   // const resetURL = `${req.protocol}://${req.get(
   //   "host"
   // )}/v1/auth/resetPassword/${resetToken}`;
 
-  const resetURL = `http://localhost:5173/reset-password/?token=${resetToken}`;
+  const resetURL =
+    process.env.NODE_ENV === "production"
+      ? `${process.env.FRONTEND_URL}/reset-password/?token=${resetToken}`
+      : `http://localhost:5173/reset-password/?token=${resetToken}`;
 
   try {
     await sendEmail({
-      // email: user.email,
-      email: "m4chtomasz@gmail.com",
+      email: user.email,
       subject: `Your password reset token (valid 10 mins)`,
       html: emailMessage.messageResetPassword(resetURL),
     });
@@ -336,7 +347,6 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
-  // 1) Get user based on the token
   const hashedToken = crypto
     .createHash("sha256")
     .update(req.params.token)
@@ -362,9 +372,6 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
-  console.log(req.body);
-  console.log(req.user.id);
-  // 1) Get user from colection
   const user = await User.findById(req.user.id).select("+password");
   console.log("User found:", user);
 

@@ -11,6 +11,19 @@ exports.messageNewUser = (name, URL) => `
     </div>
   `;
 
+exports.messageExsistingUser = (name, URL) => `
+    <div style="text-align: center; font-family: Arial, sans-serif; padding: 20px;">
+      <h1 style="color: #333;">Welcome back, ${name}!</h1>
+      <p style="font-size: 16px; color: #555;">Click the button below to activate your account:</p>
+      <a href="${URL}" 
+         style="display: inline-block; padding: 12px 24px; font-size: 16px; 
+                color: #fff; background-color: #28a745; text-decoration: none; 
+                border-radius: 5px; font-weight: bold;">
+        Activate Account
+      </a>
+    </div>
+  `;
+
 exports.messageResetPassword = (URL) => `
     <div style="text-align: center; font-family: Arial, sans-serif; padding: 20px;">
       <h1 style="color: #333;">Forgot your password? Click the link below to reset your password:</h1>

@@ -1,8 +1,9 @@
 const AppError = require("../utils/appError");
 
 const handleDuplicateFieldsDB = (err) => {
-  const value = err.errmsg.match(/(["'])(\\?.)*?\1/)[0];
-  const message = `Duplicate fields value ${value}. Please use another value.`;
+  const field = Object.keys(err.keyValue)[0];
+  const value = err.keyValue[field];
+  const message = `Duplicate field '${field}' with value '${value}'. Please use another value.`;
   return new AppError(message, 400);
 };
 
@@ -13,6 +14,17 @@ const handleValidationErrorDB = (err) => {
   }));
   return new AppError("Validation failed", 400, errors);
 };
+
+const handleCastErrorDB = (err) => {
+  const message = `Invalid ${err.path}: ${err.value}`;
+  return new AppError(message, 400);
+};
+
+const handleJWTError = () =>
+  new AppError("Invalid token. Please log in again!", 401);
+
+const handleJWTExpiredError = () =>
+  new AppError("Your token has expired! Please log in again.", 401);
 
 const sendErrorDev = (err, res) => {
   res.status(err.statusCode).json({
@@ -32,9 +44,10 @@ const sendErrorProd = (err, res) => {
       isOperational: err.isOperational,
     });
   } else {
+    console.error("ERROR 💥:", err);
     res.status(500).json({
       status: "error",
-      message: "Something went rong!",
+      message: "Something went wrong!",
     });
   }
 };
@@ -49,17 +62,18 @@ module.exports = (err, req, res, next) => {
       return res.status(error.statusCode).json({
         status: error.status,
         message: error.message,
-        errors: error.errors, // Include the validation errors
+        errors: error.errors,
       });
     }
     sendErrorDev(err, res);
   } else if (process.env.NODE_ENV === "production") {
-    let error = Object.assign({}, err);
-    console.log("Error Name:", err.name);
-    if (err.name === "CastError") error = hendleCastErrorDB(err);
+    let error = { ...err, message: err.message, errors: err.errors };
+
+    if (err.name === "CastError") error = handleCastErrorDB(err);
     if (err.code === 11000) error = handleDuplicateFieldsDB(err);
     if (err.name === "JsonWebTokenError") error = handleJWTError();
     if (err.name === "TokenExpiredError") error = handleJWTExpiredError();
+    if (err.name === "ValidationError") error = handleValidationErrorDB(err);
 
     sendErrorProd(error, res);
   }

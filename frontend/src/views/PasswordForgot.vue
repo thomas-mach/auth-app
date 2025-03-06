@@ -58,7 +58,6 @@ let successMessage = ref("");
 let errorMessage = ref("");
 
 const hendleForgotPasssword = async () => {
-  console.log("email.value", email.value);
   successMessage.value = "";
   errorMessage.value = "";
   emailInputError.value = "";
@@ -71,9 +70,7 @@ const hendleForgotPasssword = async () => {
     });
     successMessage.value = response.message;
     email.value = "";
-    console.log(response);
   } catch (error) {
-    console.log(error);
     errorMessage.value = error.response.data.message;
   }
 };

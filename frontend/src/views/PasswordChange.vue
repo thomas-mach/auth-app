@@ -148,33 +148,27 @@ const hendleUpdatePassword = async () => {
   errorMessage.value = "";
 
   inputValidate();
-  console.log("input validate", inputValidate());
   try {
     const response = await updatePassword({
       password: passwordCurrent.value,
       passwordNew: passwordNew.value,
       passwordConfirm: passwordConfirm.value,
     });
-    successMessage.value = response.data.message;
     passwordCurrent.value = "";
     passwordNew.value = "";
     passwordConfirm.value = "";
     hendeleLogout();
   } catch (error) {
-    console.log(error);
     errorMessage.value = error.response?.data?.message;
   }
 };
 
 const hendeleLogout = async () => {
   try {
-    const data = await logout();
+    await logout();
     authStore.login({ isLoggedIn: false });
     router.push("/signin");
-    console.log(data);
-  } catch (error) {
-    console.log(error);
-  }
+  } catch (error) {}
 };
 
 const toggleIcon = () => {
@@ -212,7 +206,7 @@ const inputValidate = () => {
   passwordNewInputError.value = "";
   passwordConfirmInputError.value = "";
 
-  let isValid = true; // Assume che i dati siano validi all'inizio
+  let isValid = true;
 
   if (!passwordCurrent.value) {
     passwordCurrentInputError.value = "The current password is required";
@@ -235,7 +229,7 @@ const inputValidate = () => {
     isValid = false;
   }
 
-  return isValid; // Ritorna true se tutto è valido, altrimenti false
+  return isValid;
 };
 
 const passwordConfirmValidate = () => {

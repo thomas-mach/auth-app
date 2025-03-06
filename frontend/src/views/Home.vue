@@ -21,7 +21,7 @@ const setFalseAfterDelay = () => {
   setTimeout(() => {
     messageTime.value = false;
     messagesStore.setMessage("");
-  }, 5000);
+  }, 3500);
 };
 
 setFalseAfterDelay();

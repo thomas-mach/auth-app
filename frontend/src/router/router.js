@@ -3,7 +3,6 @@ import { useAuthStore } from "../store/storeAuth.js"; // Store di autenticazione
 import Signup from "../views/Singup.vue";
 import Signin from "../views/Signin.vue";
 import PasswordChange from "../views/PasswordChange.vue";
-import NameChange from "../views/NameChange.vue";
 import PasswordForgot from "../views/PasswordForgot.vue";
 import PasswordReset from "../views/PasswordReset.vue";
 import DashBoard from "../views/DashBoard.vue";
@@ -33,11 +32,6 @@ const routes = [
       {
         path: "password-change",
         component: PasswordChange,
-        meta: { requiresAuth: true },
-      },
-      {
-        path: "name-change",
-        component: NameChange,
         meta: { requiresAuth: true },
       },
       {
