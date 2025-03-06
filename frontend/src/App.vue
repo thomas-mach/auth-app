@@ -12,7 +12,6 @@
       <footer class="footer">
         <img
           class="hills"
-          <img
           src="/images/pattern-hills.svg"
           alt="Pattern Hills"
         />
