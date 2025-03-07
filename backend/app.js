@@ -11,6 +11,8 @@ require("./jobs/deleteOldUsers");
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("*", (req, res) => {
