@@ -12,11 +12,13 @@ require("./jobs/deleteOldUsers");
 const app = express();
 
 app.set("trust proxy", 1);
+app.use("/v1/auth", authRouter);
+app.use("/v1/users", userRouter);
 
-app.use(express.static(path.join(__dirname, "frontend", "dist")));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "dist", "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.use(helmet());
@@ -37,9 +39,6 @@ app.use(
 app.use(express.json());
 app.use(morgan("dev"));
 app.use(cookieParser());
-
-app.use("/v1/auth", authRouter);
-app.use("/v1/users", userRouter);
 
 app.use(globalErrorHandling);
 
