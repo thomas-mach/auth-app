@@ -26,6 +26,18 @@ export const signin = async (userData) => {
   }
 };
 
+// export const verifyEmail = async (token) => {
+//   try {
+//     // Fai una richiesta GET alla rotta di verifica con il token
+//     const response = await axios.get(`${API_URL}/verify?token=${token}`, {
+//       withCredentials: true,
+//     });
+//     return response.data; // Ritorna i dati della risposta
+//   } catch (error) {
+//     throw error; // Se c'è un errore, viene lanciato
+//   }
+// };
+
 export const logout = async () => {
   try {
     const response = await axios.post(`${API_URL}/logout`, {
