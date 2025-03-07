@@ -16,12 +16,12 @@ const authLimiter = limiter({
   },
 });
 
-router.post("/signup", authController.signup);
-router.get("/verify", authController.verifyEmail);
-router.post("/login", authController.login);
+router.post("/signup", authLimiter, authController.signup);
+router.get("/verify", authLimiter, authController.verifyEmail);
+router.post("/login", authLimiter, authController.login);
 router.post("/logout", authController.logout);
-router.post("/resendEmail", authController.resendEmail);
-router.post("/forgotPassword", authController.forgotPassword);
+router.post("/resendEmail", authLimiter, authController.resendEmail);
+router.post("/forgotPassword", authLimiter, authController.forgotPassword);
 router.patch("/resetPassword/:token", authController.resetPassword);
 router.patch(
   "/updateMyPassword",
